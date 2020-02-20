@@ -1,0 +1,97 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   get_next_line.c                                    :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: rysmith <marvin@42.fr>                     +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2020/02/20 13:07:30 by rysmith           #+#    #+#             */
+/*   Updated: 2020/02/20 13:55:45 by rysmith          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "get_next_line.h"
+
+size_t	find_newline(char *store)
+{
+	int	counter;
+
+	counter = 0;
+	while (store[counter] != '\n')
+		counter++;
+/*
+ * Increments through string till newline char is found then returns
+ * index of the newline char
+ */
+	return(counter);
+}
+
+int		readline(char **store, char ** line)
+{
+	char	*temp;
+	int		pos;
+
+	pos = 0;
+	if (ft_strchr(*store, "\n") != NULL)
+	{
+/* If newline char is found */
+		pos = find_newline(*store);
+/* Find position of newline char */
+		*line = ft_strsub(*store, 0, pos);
+/* Create new string and allocate memory for the newline */
+		temp = ft_strdup(ft_strchar(*store, '\n') + 1);
+/* Copy what's inside store to temp */
+		free(*store);
+		*store = temp;
+/* Free store then copy temp into store */
+		if ((*store)[0] == '\0')
+			ft_strdel(store);
+/* If null terminator is found in store then delete the string store */
+	}
+	else
+	{
+		*line = ft_strdup(*store);
+		ft_strdel(store);
+/* If newline is not found set line to store then free store */
+	}
+	return (1);
+/* function ran successfully return 1 */
+}
+
+int		get_next_line(int fd, char **line)
+{
+	char		stackbuff[BUFF_SIZE + 1];
+/* Set stackbuff to the buffer size + 1 for null terminating char */
+	static char	*store[MAX_FD];
+/* Give ability to utlise GNL on multiple files */
+	int			bytes;
+/* Create variable to containe amount of bytes read */
+	char		*temp;
+/* Variable used to contain temporary data for swaps */
+	
+	if (store[fd] == NULL)
+		store[fd] = ft_strnew(0);
+/* If store[fd] doesn't already exist set to a new empty string */
+	while ((bytes = read(fd, stackbuff, BUFF_SIZE)) > 0)
+	{
+/* While there are bytes to be read read will return the number of */
+/* bytes read */
+		stackbuff[bytes] = '\0';
+/* Set the terminating char */
+		temp = ft_strjoin(store[fd], stackbuff);
+/* Set temp the the store[fd] string + the buffered stack string */
+		free(store[fd]);
+/* Free store to prevent memory leak */
+		store[fd] = temp;
+/* Set store to the temp str */
+	}
+	if (bytes < 0)
+		return (-1);
+/* If bytes is negetive error has occured terminate program */
+	else if (bytes == 0 && ft_strlen(store[fd]) == 0)
+		return (0);
+/* If the file is empty return 0 */
+	else
+		return (readline(&store[fd], line));
+/* If program executes correctly return 1 */
+}
